@@ -48,3 +48,27 @@ class FinanceService:
             "Total Charges (6)": charges,
             "Résultat Net": produits - charges
         }
+
+
+        def obtenir_synthese_flash():
+            # 1. Trésorerie (Solde Banque 512)
+            lignes_bq = LigneEcriture.objects.filter(compte__numero='512000')
+            cash = (lignes_bq.aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0) - \
+                (lignes_bq.aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0)
+
+            # 2. Résultat Net (Produits 7 - Charges 6)
+            produits = LigneEcriture.objects.filter(compte__numero__startswith='7').aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0
+            charges = LigneEcriture.objects.filter(compte__numero__startswith='6').aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0
+            resultat = produits - charges
+
+            # 3. TVA à décaisser (TVA Collectée - TVA Déductible)
+            tva_coll = LigneEcriture.objects.filter(compte__numero='445710').aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0
+            tva_deduc = LigneEcriture.objects.filter(compte__numero='445660').aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0
+            tva_due = tva_coll - tva_deduc
+
+            return {
+                "cash": cash,
+                "resultat": resultat,
+                "tva_due": tva_due,
+                "nb_ecritures": LigneEcriture.objects.count()
+            }

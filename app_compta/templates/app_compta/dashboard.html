@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compta API - Dashboard</title>
+    <title>ComptaFlow - Dashboard Expert</title>
 
-    <!-- Bootstrap 5 (URL corrigée) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Tailwind CSS (pour le responsive mobile) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -16,14 +13,11 @@
 
         :root {
             --primary: #4e73df;
-            --primary-dark: #224abe;
             --success: #1cc88a;
-            --success-dark: #13855c;
             --warning: #f6c23e;
-            --warning-dark: #dda20a;
+            --danger: #e74a3b;
+            --dark-blue: #1a1f4e;
         }
-
-        * { box-sizing: border-box; }
 
         body {
             background: #f0f2f8;
@@ -34,271 +28,233 @@
         .dashboard-header {
             background: linear-gradient(135deg, #1a1f4e 0%, #2d3a8c 100%);
             color: white;
-            padding: 2rem 0 3rem;
-            margin-bottom: -1.5rem;
-        }
-
-        .dashboard-header h1 {
-            font-weight: 800;
-            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            padding: 2.5rem 0 4rem;
+            margin-bottom: -2rem;
         }
 
         /* ─── Stat Cards ─── */
         .card-stat {
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
             position: relative;
-        }
-
-        .card-stat::before {
-            content: '';
-            position: absolute;
-            top: -20px; right: -20px;
-            width: 80px; height: 80px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
-        }
-
-        .card-stat::after {
-            content: '';
-            position: absolute;
-            bottom: -30px; right: 10px;
-            width: 120px; height: 120px;
-            background: rgba(255,255,255,0.07);
-            border-radius: 50%;
+            overflow: hidden;
         }
 
         .card-stat:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
         }
 
         .card-stat h6 {
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             letter-spacing: 0.1em;
             font-weight: 600;
-            opacity: 0.85;
             text-transform: uppercase;
+            margin-bottom: 0.5rem;
         }
 
         .card-stat h2 {
             font-family: 'DM Mono', monospace;
-            font-size: clamp(1.4rem, 3vw, 1.9rem);
-            font-weight: 500;
-            margin: 0.4rem 0 0;
+            font-weight: 600;
         }
 
         .bg-gradient-primary { background: linear-gradient(135deg, #4e73df, #224abe); color: white; }
-        .bg-gradient-success  { background: linear-gradient(135deg, #1cc88a, #13855c); color: white; }
-        .bg-gradient-warning  { background: linear-gradient(135deg, #f6c23e, #c77d0a); color: white; }
+        .bg-gradient-success { background: linear-gradient(135deg, #1cc88a, #13855c); color: white; }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f6c23e, #dda20a); color: white; }
+        .bg-gradient-danger { background: linear-gradient(135deg, #e74a3b, #be2617); color: white; }
 
         /* ─── Content Cards ─── */
         .card-content {
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: white;
         }
-
-        .card-content h4 {
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: #1a1f4e;
-        }
-
-        .table td {
-            font-size: 0.9rem;
-            padding: 0.5rem 0.75rem;
-            border-color: #f0f2f8;
-        }
-
-        .table td:first-child { color: #555; }
-        .table td:last-child { font-family: 'DM Mono', monospace; color: #1a1f4e; }
 
         .perf-label {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #888;
+            letter-spacing: 0.05em;
+            color: #777;
         }
 
         .perf-value {
             font-family: 'DM Mono', monospace;
-            font-size: 1.1rem;
-            color: #1a1f4e;
-            font-weight: 500;
+            font-weight: 600;
         }
 
-        /* ─── Responsive tweaks ─── */
-        @media (max-width: 576px) {
-            .dashboard-header { padding: 1.25rem 0 2.5rem; }
-            .card-stat { padding: 1.25rem !important; }
-        }
+        canvas { max-width: 100% !important; }
     </style>
 </head>
 <body>
 
-    <!-- En-tête -->
-    <div class="dashboard-header">
-        <div class="container">
-            <h1>📊 Tableau de Bord Financier</h1>
-            <p class="opacity-60 mb-0" style="font-size:0.85rem;">Vue d'ensemble de votre comptabilité</p>
-        </div>
-    </div>
-
-    <div class="container py-4 py-md-5">
-
-        <!-- ─── KPI Cards ─── -->
-        <!-- CORRECTION : la div du graphique était imbriquée ici au lieu d'être après le row -->
-        <div class="row g-3 g-md-4 mb-4">
-            <div class="col-12 col-sm-6 col-lg-4">
-                <div class="card card-stat bg-gradient-primary p-3 p-md-4 h-100">
-                    <h6>Solde Banque (512)</h6>
-                    <h2>{{ bilan.actif.Disponibilités}} €</h2>
+    <header class="dashboard-header">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">🚀 ComptaFlow Dashboard</h1>
+                    <p class="opacity-70 mt-1">Analyse financière en temps réel • Avril 2026</p>
                 </div>
-            </div>
-            
-            <div class="col-12 col-sm-6 col-lg-4">
-                <div class="card card-stat bg-gradient-success p-3 p-md-4 h-100">
-                    <h6>Résultat Net (Bénéfice / Perte)</h6>
-                    <h2>{{ resultat.resultat_net }} €</h2>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-lg-4">
-                <div class="card card-stat bg-gradient-warning p-3 p-md-4 h-100">
-                    <h6>TVA à décaisser (Estimation)</h6>
-                    <h2>{{ tva_estimee }} €</h2>
+                <div class="mt-4 md:mt-0">
+                    <a href="/api/ecritures/telecharger_pdf/" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition-all flex items-center gap-2">
+                        <span>📄 EXPORTER RAPPORT PDF</span>
+                    </a>
                 </div>
             </div>
         </div>
+    </header>
 
-        <!-- ─── Graphique (sorti du row des cards) ─── -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card card-content p-3 p-md-4">
-                    <h4 class="mb-3">📈 Évolution des dépenses mensuelles</h4>
-                    <div style="position:relative; width:100%; min-height:180px;">
-                        <canvas id="expenseChart"></canvas>
-                    </div>
+    <main class="container mx-auto px-4 -mt-8 pb-12">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div class="card-stat bg-gradient-primary p-6">
+                <h6>Trésorerie (512)</h6>
+                <h2 class="text-2xl md:text-3xl">{{ solde_banque }} €</h2>
+                <div class="mt-2 text-xs opacity-60">Disponibilités réelles</div>
+            </div>
+
+            <div class="card-stat {% if resultat.resultat_net >= 0 %}bg-gradient-success{% else %}bg-gradient-danger{% endif %} p-6">
+                <h6>Résultat Net</h6>
+                <h2 class="text-2xl md:text-3xl">{{ resultat.resultat_net }} €</h2>
+                <div class="mt-2 text-xs opacity-60">Période en cours</div>
+            </div>
+
+            <div class="card-stat bg-gradient-warning p-6">
+                <h6>TVA à Décaisser</h6>
+                <h2 class="text-2xl md:text-3xl">{{ tva_estimee }} €</h2>
+                <div class="mt-2 text-xs opacity-80">Provision estimée</div>
+            </div>
+
+            <div class="card-stat bg-gradient-danger p-6">
+                <h6>Impayés Clients</h6>
+                <h2 class="text-2xl md:text-3xl">{{ creances_attente }} €</h2>
+                <div class="mt-2 text-xs opacity-60">Non lettrées (411)</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 card-content p-6">
+                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span>📈 Évolution des dépenses mensuelles</span>
+                </h4>
+                <div class="h-[250px] w-full">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card-content p-6">
+                <h4 class="font-bold text-slate-800 mb-4">🍰 Répartition des Charges</h4>
+                <div class="h-[250px] flex items-center justify-center">
+                    <canvas id="repartitionChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- ─── Bilan + Résultat ─── -->
-        <div class="row g-3 g-md-4">
-            <div class="col-12 col-md-6">
-                <div class="card card-content p-3 p-md-4 h-100">
-                    <h4 class="mb-3">🏦 Structure de l'Actif</h4>
-                    <table class="table table-borderless mb-0">
-                        {% for poste, montant in bilan.actif.items %}
-                        <tr>
-                            <td>{{ poste }}</td>
-                            <td class="text-end fw-bold">{{ montant }} €</td>
-                        </tr>
-                        {% endfor %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card-content p-6">
+                <h4 class="font-bold text-slate-800 mb-4">🏦 Structure de l'Actif</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-bottom border-slate-100">
+                                <th class="py-2 text-xs uppercase text-slate-400 font-semibold">Poste</th>
+                                <th class="py-2 text-right text-xs uppercase text-slate-400 font-semibold">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            {% for poste, montant in bilan.actif.items %}
+                            <tr>
+                                <td class="py-3 text-sm text-slate-600">{{ poste }}</td>
+                                <td class="py-3 text-right font-mono font-medium text-slate-900">{{ montant }} €</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>
-            <div class="col-md-3">
-            <div class="card card-stat bg-danger text-white p-4">
-                <h6 class="text-uppercase opacity-75">Factures Impayées</h6>
-                <h2 class="fw-bold">{{ creances_attente }} €</h2>
-            </div>
-            </div>
 
-
-            <div class="col-12 col-md-6">
-                <div class="card card-content p-3 p-md-4 h-100">
-                    <h4 class="mb-4">📋 Compte de Résultat</h4>
-
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                        <span class="perf-label">Total des ventes (Produits)</span>
-                        <span class="perf-value text-success">{{ resultat.total_produits }} €</span>
+            <div class="card-content p-6 flex flex-col">
+                <h4 class="font-bold text-slate-800 mb-6">📋 Compte de Résultat</h4>
+                
+                <div class="space-y-4 flex-grow">
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <span class="perf-label text-emerald-700">Produits (Ventes)</span>
+                        <span class="perf-value text-emerald-600 text-lg">+ {{ resultat.total_produits }} €</span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                        <span class="perf-label">Total des charges</span>
-                        <span class="perf-value text-danger">{{ resultat.total_charges }} €</span>
+                    
+                    <div class="flex justify-between items-center p-3 rounded-xl bg-rose-50 border border-rose-100">
+                        <span class="perf-label text-rose-700">Charges (Frais)</span>
+                        <span class="perf-value text-rose-600 text-lg">- {{ resultat.total_charges }} €</span>
                     </div>
-
-                    <div class="mt-3 p-3 rounded-3" style="background:#f8f9ff;">
-    
-                        <div class="perf-label mb-2">Performance & Reporting</div>
-    
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    {% if resultat.resultat_net > 0 %}
-                    <span class="badge rounded-pill fs-6 px-3 py-2" style="background:#d1fae5; color:#065f46;">
-                        ✅ Bénéficiaire
-                    </span>
-                    {% else %}
-                    <span class="badge rounded-pill fs-6 px-3 py-2" style="background:#fee2e2; color:#991b1b;">
-                        ⚠️ Déficitaire
-                    </span>
-                    {% endif %}
                 </div>
 
-                <a href="/api/ecritures/telecharger_pdf/" 
-                class="btn btn-sm fw-bold px-3 py-2 rounded-pill shadow-sm" 
-                style="background-color: #1cc88a; color: white; border: none; font-size: 0.85rem;">
-                    📄 EXPORTER Le RapportPDF
-                </a>
-            </div>
-        </div>
+                <div class="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs uppercase tracking-widest text-slate-400 mb-1">Performance Globale</div>
+                        {% if resultat.resultat_net > 0 %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✅ BÉNÉFICIAIRE</span>
+                        {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">⚠️ DÉFICITAIRE</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-slate-900">{{ resultat.resultat_net }} €</div>
+                    </div>
                 </div>
             </div>
         </div>
+    </main>
 
-    </div><!-- /container -->
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('expenseChart').getContext('2d');
-        new Chart(ctx, {
+        // 1. Graphique d'Évolution (Line)
+        const ctxLine = document.getElementById('expenseChart').getContext('2d');
+        new Chart(ctxLine, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+                labels: [{% for item in graph_data %}"Mois {{ item.mois }}",{% endfor %}],
                 datasets: [{
                     label: 'Dépenses (€)',
                     data: [{% for item in graph_data %}{{ item.total }},{% endfor %}],
                     borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.08)',
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#4e73df',
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
+                    pointRadius: 4
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1a1f4e',
-                        titleFont: { family: 'Syne', weight: '700' },
-                        bodyFont: { family: 'DM Mono' },
-                        padding: 12,
-                        callbacks: {
-                            label: ctx => ' ' + ctx.parsed.y.toLocaleString('fr-FR') + ' €'
-                        }
-                    }
-                },
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { font: { family: 'Syne', size: 11 }, color: '#888' }
-                    },
-                    y: {
-                        grid: { color: '#eef0f8' },
-                        ticks: {
-                            font: { family: 'DM Mono', size: 11 },
-                            color: '#888',
-                            callback: v => v.toLocaleString('fr-FR') + ' €'
-                        }
+                    y: { beginAtZero: true, grid: { color: '#f0f2f8' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Graphique de Répartition (Pie)
+        const ctxPie = document.getElementById('repartitionChart').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for item in repartition_charges %}"{{ item.compte__libelle }}",{% endfor %}],
+                datasets: [{
+                    data: [{% for item in repartition_charges %}{{ item.total }},{% endfor %}],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { family: 'Syne', size: 10 } }
                     }
                 }
             }

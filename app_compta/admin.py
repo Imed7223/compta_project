@@ -46,3 +46,8 @@ class EcritureAdmin(admin.ModelAdmin):
                 f"Attention : l'écriture '{obj.libelle}' est déséquilibrée ! "
                 f"(Débit: {total_d} € | Crédit: {total_c} €)"
             )
+
+
+@admin.register(LigneEcriture)
+class LigneEcritureAdmin(admin.ModelAdmin):
+    list_display = ('ecriture', 'compte', 'montant_debit', 'montant_credit', 'lettrage') # <-- Ajoutez 'lettrage' ici
