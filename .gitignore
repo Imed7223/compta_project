@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+*.log
+*.pot
+
+# Environnement
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Migrations compilées / caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Local configs
+local_settings.py
