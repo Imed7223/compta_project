@@ -88,15 +88,22 @@ class EcritureComptable(models.Model):
     def __str__(self):
         return f"{self.journal.code} / {self.numero_piece} — {self.libelle}"
 
-    @property
-    def est_equilibree(self):
-        """Vérifie que débit = crédit (règle fondamentale de la comptabilité)."""
-        from django.db.models import Sum
-        totaux = self.lignes.aggregate(
-            debit=Sum('montant_debit'),
-            credit=Sum('montant_credit')
-        )
-        return (totaux['debit'] or 0) == (totaux['credit'] or 0)
+    
+    def verifier_equilibre(self):
+        """Calcule le total débit et crédit des lignes liées."""
+        # On utilise .all() pour inclure les lignes qui viennent d'être créées
+        lignes = self.lignes.all() 
+        total_debit = sum(l.montant_debit for l in lignes)
+        total_credit = sum(l.montant_credit for l in lignes)
+        
+        return (total_debit == total_credit), total_debit, total_credit
+
+    def save(self, *args, **kwargs):
+        """
+        Note: La validation des Inlines dans l'Admin est complexe.
+        On utilise généralement cette méthode pour les calculs après enregistrement.
+        """
+        super().save(*args, **kwargs)
 
 
 class LigneEcriture(models.Model):
