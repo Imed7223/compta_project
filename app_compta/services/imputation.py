@@ -11,71 +11,111 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # RÈGLES D'IMPUTATION (Configurables)
 # =============================================================================
+
+# Configuration du compte de banque par défaut
+COMPTE_BANQUE = "512000"
+
 REGLES_IMPUTATION = [
-    # Recettes clients (Classe 7)
+    # --- PRODUITS (CLASSE 7) ---
     {
-        "mots_cles": ["client", "virement", "paiement", "mairie", "sarl", "sas", "btp"],
-        "sens": "credit", 
-        "compte_contrepartie": "707000",   # Ventes de marchandises
-        "journal": "BQ",
-        "categorie": "recette_client",
+        "mots_cles": ["vente", "client", "virement", "paiement", "facture", "sarl", "sas"],
+        "sens": "credit",
+        "compte_contrepartie": "707000",  # Ventes de marchandises / Prestations
+        "categorie": "chiffre_affaires",
         "tva_applicable": True,
     },
-    # Loyers (Classe 6)
+    
+    # --- CHARGES EXTERNES (CLASSE 60/61/62) ---
     {
-        "mots_cles": ["loyer", "bail", "immobilier"],
+        "mots_cles": ["edf", "engie", "total", "gaz", "electricite", "eau"],
         "sens": "debit",
-        "compte_contrepartie": "613200", 
-        "journal": "BQ",
-        "categorie": "loyer",
-        "tva_applicable": True,
-    },
-    # Charges sociales (Classe 6 - Pas de TVA en général)
-    {
-        "mots_cles": ["urssaf", "cpam", "retraite", "prevoyance", "charges sociales"],
-        "sens": "debit",
-        "compte_contrepartie": "645000",
-        "journal": "BQ",
-        "categorie": "charges_sociales",
-        "tva_applicable": False,
-    },
-    # Abonnements SaaS / Telecom (Classe 6)
-    {
-        "mots_cles": ["sage", "abonnement", "microsoft", "google", "aws", "ovh", "orange", "free"],
-        "sens": "debit",
-        "compte_contrepartie": "626000",
-        "journal": "BQ",
-        "categorie": "telecom_saas",
-        "tva_applicable": True,
-    },
-    # Énergie (Classe 6)
-    {
-        "mots_cles": ["edf", "engie", "gaz", "électricité"],
-        "sens": "debit",
-        "compte_contrepartie": "606100",
-        "journal": "BQ",
+        "compte_contrepartie": "606100",  # Fournitures non stockables (Énergie)
         "categorie": "energie",
         "tva_applicable": True,
     },
-    # Matériel informatique (Classe 2 - Immobilisation)
     {
-        "mots_cles": ["matériel", "informatique", "ordinateur", "serveur"],
+        "mots_cles": ["amazon", "fnac", "bureau", "fourniture", "papier", "encre"],
         "sens": "debit",
-        "compte_contrepartie": "218300",
-        "journal": "BQ",
-        "categorie": "immobilisation",
+        "compte_contrepartie": "606300",  # Fournitures d'entretien et de petit équipement
+        "categorie": "achats_divers",
+        "tva_applicable": True,
+    },
+    {
+        "mots_cles": ["loyer", "immobilier", "sci", "bail", "quittance"],
+        "sens": "debit",
+        "compte_contrepartie": "613200",  # Locations immobilières
+        "categorie": "loyer",
+        "tva_applicable": True,
+    },
+    {
+        "mots_cles": ["assurance", "axa", "allianz", "maaf", "macif", "generali"],
+        "sens": "debit",
+        "compte_contrepartie": "616000",  # Primes d'assurances (Souvent sans TVA)
+        "categorie": "assurance",
+        "tva_applicable": False,
+    },
+    {
+        "mots_cles": ["avocat", "comptable", "expert", "honoraire", "conseil", "juridique"],
+        "sens": "debit",
+        "compte_contrepartie": "622600",  # Honoraires
+        "categorie": "honoraires",
+        "tva_applicable": True,
+    },
+    {
+        "mots_cles": ["orange", "sfr", "bouygues", "free", "telecom", "internet", "cloud", "aws", "google", "microsoft"],
+        "sens": "debit",
+        "compte_contrepartie": "626000",  # Frais postaux et télécommunications
+        "categorie": "telecom_it",
+        "tva_applicable": True,
+    },
+    {
+        "mots_cles": ["frais", "commission", "agios", "tenue de compte", "banque"],
+        "sens": "debit",
+        "compte_contrepartie": "627000",  # Services bancaires
+        "categorie": "frais_bancaires",
+        "tva_applicable": False, # La plupart des frais bancaires sont exonérés
+    },
+
+    # --- IMPÔTS ET TAXES (CLASSE 63) ---
+    {
+        "mots_cles": ["impot", "tresor public", "cfe", "is", "taxe"],
+        "sens": "debit",
+        "compte_contrepartie": "630000",  # Impôts et taxes
+        "categorie": "impots",
+        "tva_applicable": False,
+    },
+
+    # --- CHARGES DE PERSONNEL (CLASSE 64) ---
+    {
+        "mots_cles": ["salaire", "remuneration", "virement salaire"],
+        "sens": "debit",
+        "compte_contrepartie": "421000",  # Personnel - Rémunérations dues (On passe par un compte tiers)
+        "categorie": "salaires",
+        "tva_applicable": False,
+    },
+    {
+        "mots_cles": ["urssaf", "cotisation", "retraite", "prevoyance", "malakoff", "agirc"],
+        "sens": "debit",
+        "compte_contrepartie": "645000",  # Charges de sécurité sociale
+        "categorie": "social",
+        "tva_applicable": False,
+    },
+
+    # --- IMMOBILISATIONS (CLASSE 2) ---
+    {
+        "mots_cles": ["apple", "macbook", "dell", "ordinateur", "serveur", "iphone"],
+        "sens": "debit",
+        "compte_contrepartie": "218300",  # Matériel de bureau et informatique
+        "categorie": "immo_it",
         "tva_applicable": True,
     },
 ]
-
-COMPTE_BANQUE = "512000"
 
 class MoteurImputation:
     def __init__(self, regles: list[dict] = None):
         self.regles = regles or REGLES_IMPUTATION
 
     def identifier_regle(self, transaction: TransactionRaw) -> dict:
-        """Trouve la règle ou retourne le compte d'attente par défaut."""
         libelle_lower = transaction.libelle.lower()
         sens_tx = "credit" if transaction.montant > 0 else "debit"
 
@@ -85,7 +125,7 @@ class MoteurImputation:
                     if mot in libelle_lower:
                         return regle
 
-        # Fallback : Compte d'attente si aucune règle ne matche
+        # Si rien n'est trouvé, on utilise le compte d'attente (indispensable en compta)
         return {
             "compte_contrepartie": "471000",
             "journal": "BQ",
@@ -94,24 +134,22 @@ class MoteurImputation:
         }
 
     def generer_ecriture(self, transaction: TransactionRaw) -> dict:
-        """Génère les lignes d'écriture en partie double (TTC)."""
         regle = self.identifier_regle(transaction)
         montant_abs = abs(transaction.montant)
         
-        # Définition des lignes (Toujours Banque vs Contrepartie)
-        if transaction.montant > 0: # Recette : D 512 / C 7xx
+        if transaction.montant > 0:
             lignes = [
                 {"compte_numero": COMPTE_BANQUE, "montant_debit": montant_abs, "montant_credit": Decimal("0"), "libelle": transaction.libelle},
                 {"compte_numero": regle["compte_contrepartie"], "montant_debit": Decimal("0"), "montant_credit": montant_abs, "libelle": transaction.libelle},
             ]
-        else: # Dépense : D 6xx / C 512
+        else:
             lignes = [
                 {"compte_numero": regle["compte_contrepartie"], "montant_debit": montant_abs, "montant_credit": Decimal("0"), "libelle": transaction.libelle},
                 {"compte_numero": COMPTE_BANQUE, "montant_debit": Decimal("0"), "montant_credit": montant_abs, "libelle": transaction.libelle},
             ]
 
         return {
-            "journal_code": regle["journal"],
+            "journal_code": "BQ",
             "date_ecriture": transaction.date_operation,
             "numero_piece": transaction.reference,
             "libelle": transaction.libelle,

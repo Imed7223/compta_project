@@ -7,6 +7,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
+from .services.pdf_export import PDFExportService
 
 # Imports de TOUS vos modèles
 from .models import EcritureComptable, TransactionBancaire, LigneEcriture, CompteComptable
@@ -44,6 +45,25 @@ class EcritureViewSet(viewsets.ModelViewSet):
     def resultat(self, request):
         service = FinanceService()
         return Response(service.generer_compte_resultat())
+
+    @action(detail=False, methods=['get'])
+    def telecharger_pdf(self, request):
+        service_finance = FinanceService()
+        bilan = service_finance.generer_bilan()
+        
+        # On reformate pour le service PDF si nécessaire
+        res_data = service_finance.generer_compte_resultat()
+        resultat = {
+            'total_produits': res_data.get('Total Produits (7)', 0),
+            'total_charges': res_data.get('Total Charges (6)', 0),
+            'resultat_net': res_data.get('Résultat Net', 0),
+        }
+        
+        pdf_buffer = PDFExportService.generer_rapport_financier(bilan, resultat)
+        
+        response = HttpResponse(pdf_buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Rapport_Financier_2026.pdf"'
+        return response
 
 class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TransactionBancaire.objects.all()
