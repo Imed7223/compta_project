@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 120
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    ENV,
+    migrations,
+    staticfiles,
+    media,
+    .pytest_cache,
+    .mypy_cache,
+    .cache,
+    settings.py
+ignore =
+    E203,
+    W503
