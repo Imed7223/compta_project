@@ -5,6 +5,7 @@ Transforme les flux bancaires en écritures comptables en partie double.
 import logging
 from decimal import Decimal
 from .api_bancaire import TransactionRaw
+from app_compta.models import EcritureComptable, LigneEcriture, CompteComptable, Journal
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +116,51 @@ class MoteurImputation:
     def __init__(self, regles: list[dict] = None):
         self.regles = regles or REGLES_IMPUTATION
 
-    def identifier_regle(self, transaction: TransactionRaw) -> dict:
-        libelle_lower = transaction.libelle.lower()
+    def imputer(self, transaction):
+        regle = self.identifier_regle(transaction)
+        montant_abs = abs(transaction.montant)
+        
+        # 1. Récupérer ou créer l'objet Journal "Achats/Ventes/Banque"
+        # On utilise "BQ" pour Banque
+        journal_obj, _ = Journal.objects.get_or_create(
+            code="BQ", 
+            defaults={'libelle': 'Journal de Banque'}
+        )
+
+        # 2. Créer l'entête de l'écriture en passant l'OBJET journal
+        ecriture = EcritureComptable.objects.create(
+            journal=journal_obj,  # <-- On passe l'objet, pas le texte
+            date_ecriture=transaction.date_operation,
+            libelle=transaction.libelle_banque,
+            numero_piece=transaction.reference_externe
+        )
+
+        # 3. Créer les lignes (Partie Double)
+        # Compte de contrepartie (Charge ou Produit)
+        compte_cp = CompteComptable.objects.get_or_create(numero=regle["compte_contrepartie"])[0]
+        # Compte de banque
+        compte_bq = CompteComptable.objects.get_or_create(numero=COMPTE_BANQUE)[0]
+
+        if transaction.montant > 0: # Entrée d'argent (Vente)
+            # Débit Banque / Crédit Produit
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_bq, montant_debit=montant_abs, libelle=transaction.libelle_banque)
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_cp, montant_credit=montant_abs, libelle=transaction.libelle_banque)
+        else: # Sortie d'argent (Achat)
+            # Débit Charge / Crédit Banque
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_cp, montant_debit=montant_abs, libelle=transaction.libelle_banque)
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_bq, montant_credit=montant_abs, libelle=transaction.libelle_banque)
+
+        # 4. Mettre à jour le statut de la transaction
+        transaction.statut = 'valide'
+        transaction.ecriture_generee = ecriture
+        transaction.save()
+        
+        return ecriture
+    def identifier_regle(self, transaction) -> dict:
+        """Recherche une règle basée sur le libellé de la transaction."""
+        # Compatibilité TransactionRaw (libelle) et TransactionBancaire (libelle_banque)
+        libelle_raw = getattr(transaction, 'libelle', None) or getattr(transaction, 'libelle_banque', '')
+        libelle_lower = libelle_raw.lower()
         sens_tx = "credit" if transaction.montant > 0 else "debit"
 
         for regle in self.regles:
@@ -125,34 +169,52 @@ class MoteurImputation:
                     if mot in libelle_lower:
                         return regle
 
-        # Si rien n'est trouvé, on utilise le compte d'attente (indispensable en compta)
         return {
             "compte_contrepartie": "471000",
-            "journal": "BQ",
             "categorie": "a_preciser",
             "tva_applicable": False,
         }
 
-    def generer_ecriture(self, transaction: TransactionRaw) -> dict:
+    def generer_ecriture(self, transaction) -> dict | None:
+        """
+        Retourne un dict décrivant les lignes à créer, sans toucher à la base.
+        """
         regle = self.identifier_regle(transaction)
         montant_abs = abs(transaction.montant)
-        
+        libelle = getattr(transaction, 'libelle', None) or getattr(transaction, 'libelle_banque', '')
+
         if transaction.montant > 0:
             lignes = [
-                {"compte_numero": COMPTE_BANQUE, "montant_debit": montant_abs, "montant_credit": Decimal("0"), "libelle": transaction.libelle},
-                {"compte_numero": regle["compte_contrepartie"], "montant_debit": Decimal("0"), "montant_credit": montant_abs, "libelle": transaction.libelle},
+                {
+                    'compte_numero': COMPTE_BANQUE,
+                    'libelle': libelle,
+                    'montant_debit': montant_abs,
+                    'montant_credit': Decimal('0'),
+                },
+                {
+                    'compte_numero': regle['compte_contrepartie'],
+                    'libelle': libelle,
+                    'montant_debit': Decimal('0'),
+                    'montant_credit': montant_abs,
+                },
             ]
         else:
             lignes = [
-                {"compte_numero": regle["compte_contrepartie"], "montant_debit": montant_abs, "montant_credit": Decimal("0"), "libelle": transaction.libelle},
-                {"compte_numero": COMPTE_BANQUE, "montant_debit": Decimal("0"), "montant_credit": montant_abs, "libelle": transaction.libelle},
+                {
+                    'compte_numero': regle['compte_contrepartie'],
+                    'libelle': libelle,
+                    'montant_debit': montant_abs,
+                    'montant_credit': Decimal('0'),
+                },
+                {
+                    'compte_numero': COMPTE_BANQUE,
+                    'libelle': libelle,
+                    'montant_debit': Decimal('0'),
+                    'montant_credit': montant_abs,
+                },
             ]
 
         return {
-            "journal_code": "BQ",
-            "date_ecriture": transaction.date_operation,
-            "numero_piece": transaction.reference,
-            "libelle": transaction.libelle,
-            "lignes": lignes,
-            "tva_applicable": regle.get("tva_applicable", False)
+            'lignes': lignes,
+            'tva_applicable': regle.get('tva_applicable', False),
         }

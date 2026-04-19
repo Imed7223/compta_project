@@ -1,74 +1,67 @@
-from decimal import Decimal
 from django.db.models import Sum
-from app_compta.models import CompteComptable, LigneEcriture
+from decimal import Decimal
+from app_compta.models import LigneEcriture, CompteComptable
 
 class FinanceService:
-    @staticmethod
-    def obtenir_solde_compte(numero_compte):
-        """Calcule le solde d'un compte (Débit - Crédit)"""
-        totaux = LigneEcriture.objects.filter(compte__numero__startswith=numero_compte).aggregate(
+    def obtenir_solde_compte(self, prefixe_compte):
+        """
+        Calcule le solde net (Débit - Crédit) pour tous les comptes 
+        commençant par le préfixe donné (ex: '512').
+        """
+        resultat = LigneEcriture.objects.filter(
+            compte__numero__startswith=prefixe_compte
+        ).aggregate(
             total_debit=Sum('montant_debit'),
             total_credit=Sum('montant_credit')
         )
-        debit = totaux['total_debit'] or Decimal('0.00')
-        credit = totaux['total_credit'] or Decimal('0.00')
+
+        debit = resultat.get('total_debit') or Decimal('0.00')
+        credit = resultat.get('total_credit') or Decimal('0.00')
+        
         return debit - credit
 
     def generer_bilan(self):
-        """Génère un bilan simplifié (Actif / Passif)"""
-        # Actif : Immobilisations (2), Stocks (3), Créances (41), Banque (512)
-        actif = {
-            "Immobilisations": self.obtenir_solde_compte('2'),
-            "Stocks": self.obtenir_solde_compte('3'),
-            "Créances Clients": self.obtenir_solde_compte('411'),
-            "Disponibilités": self.obtenir_solde_compte('512'),
-        }
+        """Calcule les masses de l'Actif et du Passif."""
+        # Actif : Solde Débiteur (Banque + Immo + Créances)
+        disponibilites = self.obtenir_solde_compte('512')
+        creances = self.obtenir_solde_compte('411')
+        immo = self.obtenir_solde_compte('2')
         
-        # Passif : Capital (1), Dettes Fournisseurs (401), Dettes Fiscales (44)
-        passif = {
-            "Capitaux Propres": self.obtenir_solde_compte('1'),
-            "Dettes Fournisseurs": abs(self.obtenir_solde_compte('401')),
-            "Dettes Fiscales et Sociales": abs(self.obtenir_solde_compte('44')),
-        }
-        
+        # Passif : Solde Créditeur (Dettes Fournisseurs + TVA due)
+        # Note : On multiplie par -1 car les dettes sont au crédit (négatif ici)
+        fournisseurs = abs(self.obtenir_solde_compte('401'))
+        tva_due = abs(self.obtenir_solde_compte('445710')) - abs(self.obtenir_solde_compte('445660'))
+
         return {
-            "actif": actif, 
-            "total_actif": sum(actif.values()),
-            "passif": passif, 
-            "total_passif": sum(passif.values())
+            'actif': {
+                'Immobilisations': immo,
+                'Créances Clients': creances,
+                'Disponibilités': disponibilites,
+                #'Stocks': self.obtenir_solde_compte('601'),  # Achats matières premières
+            },
+            'passif': {
+                'Dettes Fournisseurs': fournisseurs,
+                'Dettes Fiscales et Sociales': round(tva_due, 2),
+                'Capitaux Propres': Decimal('0.00'),
+            },
+            'total_actif': immo + creances + disponibilites,
+            'total_passif': fournisseurs + tva_due
         }
 
     def generer_compte_resultat(self):
-        """Calcule le Résultat (Produits - Charges)"""
-        produits = abs(self.obtenir_solde_compte('7')) # Classe 7 (Créditeur par nature)
-        charges = self.obtenir_solde_compte('6')       # Classe 6 (Débiteur par nature)
+        """Calcule les Produits (7) et les Charges (6)."""
+        # Produits : On prend le Crédit (Ventes)
+        res_7 = LigneEcriture.objects.filter(
+            compte__numero__startswith='7'
+        ).aggregate(total=Sum('montant_credit'))['total'] or Decimal('0.00')
         
+        # Charges : On prend le Débit (Frais)
+        res_6 = LigneEcriture.objects.filter(
+            compte__numero__startswith='6'
+        ).aggregate(total=Sum('montant_debit'))['total'] or Decimal('0.00')
+
         return {
-            "Total Produits (7)": produits,
-            "Total Charges (6)": charges,
-            "Résultat Net": produits - charges
+            'Total Produits (7)': res_7,
+            'Total Charges (6)': res_6,
+            'Résultat Net': res_7 - res_6
         }
-
-
-        def obtenir_synthese_flash():
-            # 1. Trésorerie (Solde Banque 512)
-            lignes_bq = LigneEcriture.objects.filter(compte__numero='512000')
-            cash = (lignes_bq.aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0) - \
-                (lignes_bq.aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0)
-
-            # 2. Résultat Net (Produits 7 - Charges 6)
-            produits = LigneEcriture.objects.filter(compte__numero__startswith='7').aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0
-            charges = LigneEcriture.objects.filter(compte__numero__startswith='6').aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0
-            resultat = produits - charges
-
-            # 3. TVA à décaisser (TVA Collectée - TVA Déductible)
-            tva_coll = LigneEcriture.objects.filter(compte__numero='445710').aggregate(Sum('montant_credit'))['montant_credit__sum'] or 0
-            tva_deduc = LigneEcriture.objects.filter(compte__numero='445660').aggregate(Sum('montant_debit'))['montant_debit__sum'] or 0
-            tva_due = tva_coll - tva_deduc
-
-            return {
-                "cash": cash,
-                "resultat": resultat,
-                "tva_due": tva_due,
-                "nb_ecritures": LigneEcriture.objects.count()
-            }

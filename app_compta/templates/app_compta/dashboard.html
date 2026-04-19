@@ -25,18 +25,24 @@
             min-height: 100vh;
         }
 
+        /* Barre de navigation */
+        .navbar-custom {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
         .dashboard-header {
             background: linear-gradient(135deg, #1a1f4e 0%, #2d3a8c 100%);
             color: white;
-            padding: 2.5rem 0 4rem;
-            margin-bottom: -2rem;
+            padding: 3rem 0 5rem;
+            margin-bottom: -3rem;
         }
 
         /* ─── Stat Cards ─── */
         .card-stat {
             border: none;
             border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -44,7 +50,7 @@
 
         .card-stat:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
         }
 
         .card-stat h6 {
@@ -90,15 +96,30 @@
 </head>
 <body>
 
+    <nav class="navbar-custom py-3">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <a href="#" class="text-xl font-black text-indigo-600 tracking-tighter">
+                COMPTA<span class="text-slate-800">FLOW</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'import_csv' %}" class="text-sm font-bold text-slate-600 hover:text-indigo-600 flex items-center gap-2">
+                    <span class="bg-slate-100 p-2 rounded-lg">📁 Importer CSV</span>
+                </a>
+                <div class="h-6 w-[1px] bg-slate-200 mx-2"></div>
+                <span class="text-xs font-bold text-slate-400">ADMIN : {{ user.username }}</span>
+            </div>
+        </div>
+    </nav>
+
     <header class="dashboard-header">
         <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">🚀 ComptaFlow Dashboard</h1>
-                    <p class="opacity-70 mt-1">Analyse financière en temps réel • Avril 2026</p>
+                    <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">Tableau de Bord</h1>
+                    <p class="opacity-70 mt-2">Intelligence Financière & Saisie Automatisée • 2026</p>
                 </div>
-                <div class="mt-4 md:mt-0">
-                    <a href="/api/ecritures/telecharger_pdf/" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition-all flex items-center gap-2">
+                <div class="mt-6 md:mt-0">
+                    <a href="/api/ecritures/telecharger_pdf/" class="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-full font-bold shadow-xl transition-all transform hover:scale-105 flex items-center gap-2">
                         <span>📄 EXPORTER RAPPORT PDF</span>
                     </a>
                 </div>
@@ -106,47 +127,51 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-4 -mt-8 pb-12">
+    <main class="container mx-auto px-4 -mt-10 pb-12">
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
             <div class="card-stat bg-gradient-primary p-6">
-                <h6>Trésorerie (512)</h6>
+                <h6>Solde Banque (512)</h6>
                 <h2 class="text-2xl md:text-3xl">{{ solde_banque }} €</h2>
-                <div class="mt-2 text-xs opacity-60">Disponibilités réelles</div>
+                <div class="mt-2 text-xs opacity-60">Fonds disponibles</div>
             </div>
 
             <div class="card-stat {% if resultat.resultat_net >= 0 %}bg-gradient-success{% else %}bg-gradient-danger{% endif %} p-6">
                 <h6>Résultat Net</h6>
                 <h2 class="text-2xl md:text-3xl">{{ resultat.resultat_net }} €</h2>
-                <div class="mt-2 text-xs opacity-60">Période en cours</div>
+                <div class="mt-2 text-xs opacity-60">Performance mensuelle</div>
             </div>
 
             <div class="card-stat bg-gradient-warning p-6">
                 <h6>TVA à Décaisser</h6>
                 <h2 class="text-2xl md:text-3xl">{{ tva_estimee }} €</h2>
-                <div class="mt-2 text-xs opacity-80">Provision estimée</div>
+                <div class="mt-2 text-xs opacity-80 font-bold">Provision à prévoir</div>
             </div>
 
             <div class="card-stat bg-gradient-danger p-6">
-                <h6>Impayés Clients</h6>
+                <h6>Factures Impayées</h6>
                 <h2 class="text-2xl md:text-3xl">{{ creances_attente }} €</h2>
-                <div class="mt-2 text-xs opacity-60">Non lettrées (411)</div>
+                <div class="mt-2 text-xs opacity-60">Total clients non lettrés</div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="lg:col-span-2 card-content p-6">
-                <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <span>📈 Évolution des dépenses mensuelles</span>
+                <h4 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <span class="bg-indigo-50 text-indigo-600 p-2 rounded-lg text-sm">📈</span> 
+                    Évolution des dépenses mensuelles
                 </h4>
-                <div class="h-[250px] w-full">
+                <div class="h-[300px] w-full">
                     <canvas id="expenseChart"></canvas>
                 </div>
             </div>
 
             <div class="card-content p-6">
-                <h4 class="font-bold text-slate-800 mb-4">🍰 Répartition des Charges</h4>
-                <div class="h-[250px] flex items-center justify-center">
+                <h4 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                    <span class="bg-rose-50 text-rose-600 p-2 rounded-lg text-sm">🍰</span>
+                    Répartition des Frais
+                </h4>
+                <div class="h-[300px] flex items-center justify-center">
                     <canvas id="repartitionChart"></canvas>
                 </div>
             </div>
@@ -154,20 +179,20 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="card-content p-6">
-                <h4 class="font-bold text-slate-800 mb-4">🏦 Structure de l'Actif</h4>
+                <h4 class="font-bold text-slate-800 mb-6">🏦 Structure de l'Actif</h4>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left">
+                    <table class="w-full">
                         <thead>
-                            <tr class="border-bottom border-slate-100">
-                                <th class="py-2 text-xs uppercase text-slate-400 font-semibold">Poste</th>
-                                <th class="py-2 text-right text-xs uppercase text-slate-400 font-semibold">Montant</th>
+                            <tr class="text-left border-b border-slate-100">
+                                <th class="pb-3 text-xs uppercase text-slate-400 font-bold">Poste du Bilan</th>
+                                <th class="pb-3 text-right text-xs uppercase text-slate-400 font-bold">Valeur (€)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
                             {% for poste, montant in bilan.actif.items %}
                             <tr>
-                                <td class="py-3 text-sm text-slate-600">{{ poste }}</td>
-                                <td class="py-3 text-right font-mono font-medium text-slate-900">{{ montant }} €</td>
+                                <td class="py-4 text-sm font-semibold text-slate-600">{{ poste }}</td>
+                                <td class="py-4 text-right font-mono font-bold text-slate-900">{{ montant }} €</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -176,31 +201,31 @@
             </div>
 
             <div class="card-content p-6 flex flex-col">
-                <h4 class="font-bold text-slate-800 mb-6">📋 Compte de Résultat</h4>
+                <h4 class="font-bold text-slate-800 mb-6">📋 Compte de Résultat Simplifié</h4>
                 
                 <div class="space-y-4 flex-grow">
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                        <span class="perf-label text-emerald-700">Produits (Ventes)</span>
-                        <span class="perf-value text-emerald-600 text-lg">+ {{ resultat.total_produits }} €</span>
+                    <div class="flex justify-between items-center p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                        <span class="perf-label text-emerald-700">Chiffre d'Affaires (HT)</span>
+                        <span class="perf-value text-emerald-600 text-xl">+ {{ resultat.total_produits }} €</span>
                     </div>
                     
-                    <div class="flex justify-between items-center p-3 rounded-xl bg-rose-50 border border-rose-100">
-                        <span class="perf-label text-rose-700">Charges (Frais)</span>
-                        <span class="perf-value text-rose-600 text-lg">- {{ resultat.total_charges }} €</span>
+                    <div class="flex justify-between items-center p-4 rounded-2xl bg-rose-50 border border-rose-100">
+                        <span class="perf-label text-rose-700">Total des Charges (HT)</span>
+                        <span class="perf-value text-rose-600 text-xl">- {{ resultat.total_charges }} €</span>
                     </div>
                 </div>
 
-                <div class="mt-8 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                <div class="mt-8 p-5 rounded-3xl bg-slate-900 text-white flex items-center justify-between shadow-lg">
                     <div>
-                        <div class="text-xs uppercase tracking-widest text-slate-400 mb-1">Performance Globale</div>
+                        <div class="text-xs uppercase tracking-widest text-slate-400 mb-1">Performance Nette</div>
                         {% if resultat.resultat_net > 0 %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">✅ BÉNÉFICIAIRE</span>
+                        <span class="text-xs font-bold text-emerald-400">✅ BÉNÉFICIAIRE</span>
                         {% else %}
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">⚠️ DÉFICITAIRE</span>
+                        <span class="text-xs font-bold text-rose-400">⚠️ DÉFICITAIRE</span>
                         {% endif %}
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-slate-900">{{ resultat.resultat_net }} €</div>
+                        <div class="text-3xl font-black">{{ resultat.resultat_net }} €</div>
                     </div>
                 </div>
             </div>
@@ -209,20 +234,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // 1. Graphique d'Évolution (Line)
+        // Graphique Linéaire
         const ctxLine = document.getElementById('expenseChart').getContext('2d');
         new Chart(ctxLine, {
             type: 'line',
             data: {
                 labels: [{% for item in graph_data %}"Mois {{ item.mois }}",{% endfor %}],
                 datasets: [{
-                    label: 'Dépenses (€)',
+                    label: 'Dépenses',
                     data: [{% for item in graph_data %}{{ item.total }},{% endfor %}],
                     borderColor: '#4e73df',
                     backgroundColor: 'rgba(78, 115, 223, 0.1)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 4
+                    pointRadius: 6,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 3
                 }]
             },
             options: {
@@ -236,7 +263,7 @@
             }
         });
 
-        // 2. Graphique de Répartition (Pie)
+        // Graphique Doughnut
         const ctxPie = document.getElementById('repartitionChart').getContext('2d');
         new Chart(ctxPie, {
             type: 'doughnut',
@@ -245,16 +272,18 @@
                 datasets: [{
                     data: [{% for item in repartition_charges %}{{ item.total }},{% endfor %}],
                     backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
-                    hoverOffset: 10
+                    borderWidth: 0,
+                    hoverOffset: 20
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '70%',
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 12, font: { family: 'Syne', size: 10 } }
+                        labels: { boxWidth: 10, padding: 20, font: { family: 'Syne', size: 11 } }
                     }
                 }
             }
