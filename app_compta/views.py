@@ -202,7 +202,6 @@ def import_csv_view(request):
 
                     # Générer la proposition d'écriture
                     resultat = moteur.generer_ecriture(tx_raw)
-                    print(f"DEBUG → ref={ref} | libelle={libelle} | resultat={resultat}")
 
                     if resultat:
                         taux_tva = D('0.20')

@@ -59,7 +59,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', # Verrouille tout par défaut
+        'rest_framework.permissions.AllowAny', # Verrouille tout par défaut
     ],
 }
 
