@@ -19,15 +19,15 @@
 
     <nav class="bg-white border-b border-slate-200 shadow-sm mb-4">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="{% url 'dashboard' %}" class="text-2xl font-black text-indigo-600 tracking-tighter">
+            <a href="{% url 'dashboard' %}" class="text-xl md:text-2xl font-black text-indigo-600 tracking-tighter">
                 COMPTA<span class="text-slate-800">FLOW</span>
             </a>
             
-            <div class="flex items-center gap-6">
-                <a href="{% url 'dashboard' %}" class="nav-link-custom px-3 py-2 text-slate-600 font-semibold">Tableau de bord</a>
-                <a href="{% url 'import_csv' %}" class="nav-link-custom px-3 py-2 text-slate-600 font-semibold">📁 Importer CSV</a>
-                <div class="h-8 w-[1px] bg-slate-200"></div>
-                <span class="text-sm font-bold text-slate-400">ADMIN : {{ user.username }}</span>
+            <div class="flex items-center gap-2 md:gap-6">
+                <a href="{% url 'dashboard' %}" class="nav-link-custom px-2 md:px-3 py-2 text-slate-600 font-semibold text-sm md:text-base hidden sm:block">Tableau de bord</a>
+                <a href="{% url 'import_csv' %}" class="nav-link-custom px-2 md:px-3 py-2 text-slate-600 font-semibold text-sm md:text-base">📁 <span class="hidden sm:inline">Importer CSV</span></a>
+                <div class="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+                <span class="text-xs font-bold text-slate-400 hidden md:block">ADMIN : {{ user.username }}</span>
             </div>
         </div>
     </nav>
