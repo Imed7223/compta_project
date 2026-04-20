@@ -8,3 +8,8 @@ stripe>=11.6.0
 python-dotenv>=1.0.1
 djangorestframework>=3.14.0
 django-cors-headers>=3.13.0
+django-cors-headers
+dj-database-url
+whitenoise
+psycopg2-binary
+reportlab
