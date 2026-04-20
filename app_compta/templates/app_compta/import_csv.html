@@ -1,36 +1,43 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="max-w-2xl mx-auto mt-6 md:mt-10 px-4 md:px-0">
-    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100">
-        <div class="text-center mb-6 md:mb-8">
-            <div class="bg-indigo-100 w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+<div class="container mx-auto px-4">
+    <div class="max-w-2xl mx-auto mt-6 md:mt-10 p-6 md:p-8 bg-white rounded-3xl shadow-xl border border-slate-100">
+        <div class="text-center mb-8">
+            <div class="bg-indigo-100 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span class="text-2xl md:text-3xl">📁</span>
             </div>
             <h2 class="text-xl md:text-2xl font-bold text-slate-800">Importation de relevés</h2>
-            <p class="text-slate-500 text-sm mt-1">Importez votre fichier bancaire pour automatiser la saisie</p>
+            <p class="text-xs md:text-sm text-slate-500">Glissez votre fichier pour automatiser la saisie</p>
         </div>
 
         <form method="post" enctype="multipart/form-data" class="space-y-4 md:space-y-6">
             {% csrf_token %}
-            <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 text-center hover:border-indigo-400 transition-colors">
+            <div class="border-2 border-dashed border-slate-200 rounded-2xl p-4 md:p-6 text-center hover:border-indigo-400 transition-colors text-xs md:text-sm overflow-hidden">
                 {{ form.csv_file }}
             </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] text-sm md:text-base">
-                LANCER L'ANALYSE AUTOMATIQUE
+            
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 md:py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.01] text-xs md:text-sm">
+                🚀 LANCER L'ANALYSE AUTOMATIQUE
             </button>
         </form>
+
+        <div class="relative flex py-5 items-center">
+            <div class="flex-grow border-t border-slate-200"></div>
+            <span class="flex-shrink mx-4 text-slate-300 text-[10px] uppercase">Danger Zone</span>
+            <div class="flex-grow border-t border-slate-200"></div>
+        </div>
 
         <form method="post" action="{% url 'reset_donnees' %}">
             {% csrf_token %}
-            <button type="submit"
-                    onclick="return confirm('Supprimer toutes les données ?')"
-                    class="w-full mt-3 md:mt-4 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-xl transition-all text-sm md:text-base">
-                🗑️ RÉINITIALISER LES DONNÉES
+            <button type="submit" 
+                    onclick="return confirm('Attention : Cette action est irréversible. Supprimer toutes les données ?')"
+                    class="w-full bg-rose-50 hover:bg-rose-100 text-rose-500 font-bold py-3 rounded-xl transition-all text-xs md:text-sm border border-rose-100">
+                🗑️ RÉINITIALISER LA BASE DE DONNÉES
             </button>
         </form>
 
-        <div class="mt-4 md:mt-6 p-4 bg-slate-50 rounded-xl text-xs text-slate-400">
-            <strong>Note :</strong> Le système détecte automatiquement la TVA et les comptes de charges grâce au moteur d'imputation intégré.
+        <div class="mt-6 p-4 bg-slate-50 rounded-xl text-[9px] md:text-xs text-slate-400 leading-relaxed">
+            <strong>Note :</strong> Sécurité bancaire 256-bit. Le système détecte automatiquement la TVA et les comptes de charges grâce au moteur d'imputation intelligent.
         </div>
     </div>
 </div>
