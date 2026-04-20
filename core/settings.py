@@ -28,8 +28,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", get_random_secret_key())
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-bc53d.up.railway.app',
+]
 
+ALLOWED_HOSTS = [
+    'web-production-bc53d.up.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
 
 # Application definition
 
