@@ -22,19 +22,35 @@ class Command(BaseCommand):
             defaults={'libelle': 'Banque BNP Paribas', 'classe': '5'}
         )
 
-        # 3. Création des comptes issus des règles d'imputation
+        # 3. Création des comptes avec vrais libellés
+        comptes_avec_libelles = {
+            '707000': 'Ventes de prestations',
+            '606100': 'Eau, gaz, électricité',
+            '606300': 'Fournitures entretien',
+            '613200': 'Loyers',
+            '616000': 'Assurances',
+            '622600': 'Honoraires',
+            '626000': 'Télécoms et cloud',
+            '627000': 'Services bancaires',
+            '630000': 'Impôts et taxes',
+            '645000': 'Charges sociales',
+            '421000': 'Personnel rémunérations',
+            '218300': 'Matériel informatique',
+        }
+
         for regle in REGLES_IMPUTATION:
             num = regle['compte_contrepartie']
-            libelle = regle['categorie'].replace('_', ' ').capitalize()
-            
-            # Déterminer la classe (1er chiffre du compte)
+            libelle = comptes_avec_libelles.get(num, regle['categorie'].replace('_', ' ').capitalize())
             classe = num[0]
-            
             compte, created = CompteComptable.objects.get_or_create(
                 numero=num,
                 defaults={'libelle': libelle, 'classe': classe}
             )
-            
+            if not created:
+                # Mettre à jour le libelle si c'est encore générique
+                if compte.libelle in ['Compte Auto', regle['categorie']]:
+                    compte.libelle = libelle
+                    compte.save()
             if created:
                 self.stdout.write(f"➕ Compte créé : {num} - {libelle}")
 

@@ -158,6 +158,26 @@ def dashboard_view(request):
     return render(request, 'app_compta/dashboard.html', context)
 
 
+LIBELLES_COMPTES = {
+    '707000': 'Ventes de prestations',
+    '606100': 'Eau, gaz, électricité',
+    '606300': 'Fournitures entretien',
+    '613200': 'Loyers',
+    '616000': 'Assurances',
+    '622600': 'Honoraires',
+    '626000': 'Télécoms et cloud',
+    '627000': 'Services bancaires',
+    '630000': 'Impôts et taxes',
+    '645000': 'Charges sociales',
+    '421000': 'Personnel rémunérations',
+    '218300': 'Matériel informatique',
+    '512000': 'Banque',
+    '445660': 'TVA déductible',
+    '445710': 'TVA collectée',
+    '471000': "Compte d'attente",
+}
+
+
 def import_csv_view(request):
     if request.method == "POST":
         form = CsvImportForm(request.POST, request.FILES)
@@ -167,7 +187,7 @@ def import_csv_view(request):
             try:
                 decoded_file = csv_file.read().decode('utf-8').splitlines()
                 reader = csv.reader(decoded_file)
-                next(reader)  # Passer l'en-tête
+                next(reader)
 
                 from .services.imputation import MoteurImputation, COMPTE_BANQUE
                 from .services.api_bancaire import TransactionRaw
@@ -187,11 +207,9 @@ def import_csv_view(request):
                     date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
                     montant_decimal = D(montant)
 
-                    # Éviter les doublons
                     if TransactionBancaire.objects.filter(reference_externe=ref).exists():
                         continue
 
-                    # Construire un objet TransactionRaw pour le moteur
                     tx_raw = TransactionRaw(
                         reference=ref,
                         date_operation=date_obj,
@@ -200,14 +218,12 @@ def import_csv_view(request):
                         montant=montant_decimal,
                     )
 
-                    # Générer la proposition d'écriture
                     resultat = moteur.generer_ecriture(tx_raw)
 
                     if resultat:
                         taux_tva = D('0.20')
                         tva_active = resultat.get('tva_applicable', False)
 
-                        # Créer l'écriture comptable
                         ecriture = EcritureComptable.objects.create(
                             journal=journal_bq,
                             date_ecriture=date_obj,
@@ -217,13 +233,19 @@ def import_csv_view(request):
                             source='import_csv_web',
                         )
 
-                        # Créer les lignes avec split TVA si applicable
                         for l in resultat['lignes']:
                             montant_ttc = l['montant_debit'] if l['montant_debit'] > 0 else l['montant_credit']
+                            
                             compte_obj, _ = CompteComptable.objects.get_or_create(
                                 numero=l['compte_numero'],
-                                defaults={'libelle': 'Compte Auto', 'classe': l['compte_numero'][0]}
+                                defaults={
+                                    'libelle': LIBELLES_COMPTES.get(l['compte_numero'], 'Compte Auto'),
+                                    'classe': l['compte_numero'][0]
+                                }
                             )
+                            if compte_obj.libelle == 'Compte Auto':
+                                compte_obj.libelle = LIBELLES_COMPTES.get(l['compte_numero'], 'Compte Auto')
+                                compte_obj.save()
 
                             if tva_active and l['compte_numero'].startswith(('6', '7')):
                                 montant_ht = (montant_ttc / (D('1') + taux_tva)).quantize(D('0.01'))
@@ -239,7 +261,7 @@ def import_csv_view(request):
                                 compte_tva_num = "445660" if l['montant_debit'] > 0 else "445710"
                                 compte_tva, _ = CompteComptable.objects.get_or_create(
                                     numero=compte_tva_num,
-                                    defaults={'libelle': 'TVA sur opérations', 'classe': '4'}
+                                    defaults={'libelle': LIBELLES_COMPTES.get(compte_tva_num), 'classe': '4'}
                                 )
                                 LigneEcriture.objects.create(
                                     ecriture=ecriture,
@@ -257,7 +279,6 @@ def import_csv_view(request):
                                     montant_credit=l['montant_credit'],
                                 )
 
-                        # Enregistrer la transaction bancaire liée
                         TransactionBancaire.objects.create(
                             reference_externe=ref,
                             date_operation=date_obj,
@@ -279,6 +300,7 @@ def import_csv_view(request):
         form = CsvImportForm()
 
     return render(request, 'app_compta/import_csv.html', {'form': form})
+
 
 def reset_donnees_view(request):
     if request.method == "POST":
