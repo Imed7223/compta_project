@@ -51,17 +51,17 @@ class FinanceService:
     def generer_compte_resultat(self):
         """Calcule les Produits (7) et les Charges (6)."""
         # Produits : On prend le Crédit (Ventes)
-        res_7 = LigneEcriture.objects.filter(
+        res_7 = round(LigneEcriture.objects.filter(
             compte__numero__startswith='7'
-        ).aggregate(total=Sum('montant_credit'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('montant_credit'))['total'] or Decimal('0.00'), 2)
         
         # Charges : On prend le Débit (Frais)
-        res_6 = LigneEcriture.objects.filter(
+        res_6 = round(LigneEcriture.objects.filter(
             compte__numero__startswith='6'
-        ).aggregate(total=Sum('montant_debit'))['total'] or Decimal('0.00')
+        ).aggregate(total=Sum('montant_debit'))['total'] or Decimal('0.00'), 2)
 
         return {
             'Total Produits (7)': res_7,
             'Total Charges (6)': res_6,
-            'Résultat Net': (res_7 - res_6, 2)
+            'Résultat Net': round((res_7 - res_6), 2)
         }
