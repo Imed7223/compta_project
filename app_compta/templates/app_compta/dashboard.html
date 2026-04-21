@@ -65,6 +65,46 @@
         </div>
     </div>
 
+    <div class="mt-8 bg-white p-6 rounded-[20px] shadow-sm border border-slate-100">
+    <h4 class="font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <span class="bg-amber-50 text-amber-600 p-2 rounded-lg text-xs">🔔</span> 
+        Suivi des Factures en Attente (Non Lettrées)
+    </h4>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="text-slate-400 border-b border-slate-50">
+                    <th class="pb-3 font-bold uppercase text-[10px]">Date</th>
+                    <th class="pb-3 font-bold uppercase text-[10px]">Libellé</th>
+                    <th class="pb-3 font-bold uppercase text-[10px]">Montant</th>
+                    <th class="pb-3 font-bold uppercase text-[10px] text-right">Statut</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+                {% for ligne in factures_impayees_liste %}
+                <tr>
+                    <td class="py-4 text-slate-500">{{ ligne.ecriture.date_ecriture|date:"d/m/Y" }}</td>
+                    <td class="py-4 font-semibold text-slate-700">{{ ligne.libelle }}</td>
+                    <td class="py-4 font-mono font-bold text-rose-600">{{ ligne.montant_debit }} €</td>
+                    <td class="py-4 text-right">
+                        <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold">
+                            ⏳ EN ATTENTE
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="py-8 text-center text-slate-400 italic">
+                        Toutes les factures sont lettrées. Félicitations !
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-4 md:p-6 rounded-[20px] shadow-sm">
             <h4 class="font-bold text-slate-800 mb-6 text-sm md:text-base italic">🏦 Structure de l'Actif</h4>
@@ -124,7 +164,7 @@
     new Chart(ctxLine, {
         type: 'line',
         data: {
-            labels: [{% for item in graph_data %}"Mois {{ item.mois }}",{% endfor %}],
+            labels: [{% for item in graph_data %}"Mois {{ item.mois }}", {% endfor %}],
             datasets: [{
                 label: 'Dépenses',
                 data: [{% for item in graph_data %}{{ item.total }},{% endfor %}],

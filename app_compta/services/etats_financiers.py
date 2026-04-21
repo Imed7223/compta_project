@@ -61,3 +61,15 @@ class FinanceService:
             'Total Charges (6)': res_6,
             'Résultat Net': round((res_7 - res_6), 2)
         }
+
+    def obtenir_factures_non_lettrees(self):
+        return LigneEcriture.objects.filter(
+            compte__numero__startswith='411', 
+            lettrage__isnull=True  # Si tu as un champ 'lettrage' dans ton modèle
+        )
+    
+    def obtenir_details_creances(self):
+        """Récupère la liste des factures impayées pour affichage."""
+        return LigneEcriture.objects.filter(
+            compte__numero__startswith='411'
+        ).select_related('ecriture').order_by('-ecriture__date_ecriture')

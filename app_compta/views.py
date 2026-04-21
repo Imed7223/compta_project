@@ -112,6 +112,8 @@ def dashboard_view(request):
     
     # 2. Récupérer les données financières
     bilan_data = finance_service.generer_bilan()
+    # On récupère les factures précises
+    factures_en_attente = finance_service.obtenir_details_creances()
     res_data = finance_service.generer_compte_resultat()
     
     # 3. Calcul du solde banque
@@ -144,6 +146,7 @@ def dashboard_view(request):
     context = {
         'bilan': bilan_data,
         'creances_attente': bilan_data['actif']['Créances Clients'],
+        'factures_impayees_liste': factures_en_attente,
         'solde_banque': round(abs(solde_banque), 2),
         'resultat': {
             'total_produits': res_data.get('total_produits', res_data.get('Total Produits (7)', 0)),
