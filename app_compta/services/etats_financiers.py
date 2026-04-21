@@ -21,31 +21,27 @@ class FinanceService:
         return debit - credit
 
     def generer_bilan(self):
-        """Calcule les masses de l'Actif et du Passif."""
-        # Actif : Solde Débiteur (Banque + Immo + Créances)
+        # Utilisation de la valeur absolue pour les créances si elles sont au débit
         disponibilites = round(self.obtenir_solde_compte('512'), 2)
-        creances = round(self.obtenir_solde_compte('411'), 2)
+        creances = abs(round(self.obtenir_solde_compte('411'), 2)) # Le compte 411 est débiteur
         immo = round(self.obtenir_solde_compte('2'), 2)
 
-        # Passif : Solde Créditeur (Dettes Fournisseurs + TVA due)
-        # Note : On multiplie par -1 car les dettes sont au crédit (négatif ici)
         fournisseurs = round(abs(self.obtenir_solde_compte('401')), 2)
         tva_due = round(abs(self.obtenir_solde_compte('445710')) - abs(self.obtenir_solde_compte('445660')), 2)
 
         return {
             'actif': {
                 'Immobilisations': immo,
-                'Créances Clients': creances,
+                'Créances Clients': creances, # On affiche la valeur positive
                 'Disponibilités': disponibilites,
-                #'Stocks': self.obtenir_solde_compte('601'),  # Achats matières premières
             },
             'passif': {
                 'Dettes Fournisseurs': fournisseurs,
-                'Dettes Fiscales et Sociales': round(tva_due, 2),
+                'Dettes Fiscales et Sociales': max(Decimal('0.00'), tva_due),
                 'Capitaux Propres': Decimal('0.00'),
             },
-            'total_actif': round(immo + creances + disponibilites, 2),
-            'total_passif': round(fournisseurs + tva_due, 2)
+            'total_actif': round(immo + abs(creances) + disponibilites, 2),
+            'total_passif': round(fournisseurs + max(Decimal('0.00'), tva_due), 2)
         }
 
     def generer_compte_resultat(self):

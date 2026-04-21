@@ -143,6 +143,7 @@ def dashboard_view(request):
 
     context = {
         'bilan': bilan_data,
+        'creances_attente': bilan_data['actif']['Créances Clients'],
         'solde_banque': round(abs(solde_banque), 2),
         'resultat': {
             'total_produits': res_data.get('total_produits', res_data.get('Total Produits (7)', 0)),
@@ -154,7 +155,7 @@ def dashboard_view(request):
         'graph_data': list(depenses_mensuelles),
         'repartition_charges': list(repartition_charges),
     }
-
+    print(f"DEBUG CREANCES: {LigneEcriture.objects.filter(compte__numero__startswith='411').count()} lignes trouvées")
     return render(request, 'app_compta/dashboard.html', context)
 
 

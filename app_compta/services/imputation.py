@@ -86,6 +86,15 @@ REGLES_IMPUTATION = [
         "tva_applicable": False,
     },
 
+    # --- CRÉANCES ET DETTES (CLASSE 4) ---(Factures Impayées)
+    {
+        "mots_cles": ["impayée", "impaye", "creance", "attente"],
+        "sens": "debit", # Une créance est un actif (débit)
+        "compte_contrepartie": "411000",  # Compte Client
+        "categorie": "creances",
+        "tva_applicable": False,
+    },
+
     # --- CHARGES DE PERSONNEL (CLASSE 64) ---
     {
         "mots_cles": ["salaire", "remuneration", "virement salaire"],
@@ -120,60 +129,66 @@ class MoteurImputation:
         regle = self.identifier_regle(transaction)
         montant_abs = abs(transaction.montant)
         
-        # 1. Récupérer ou créer l'objet Journal "Achats/Ventes/Banque"
-        # On utilise "BQ" pour Banque
         journal_obj, _ = Journal.objects.get_or_create(
             code="BQ", 
             defaults={'libelle': 'Journal de Banque'}
         )
 
-        # 2. Créer l'entête de l'écriture en passant l'OBJET journal
         ecriture = EcritureComptable.objects.create(
-            journal=journal_obj,  # <-- On passe l'objet, pas le texte
+            journal=journal_obj,
             date_ecriture=transaction.date_operation,
             libelle=transaction.libelle_banque,
             numero_piece=transaction.reference_externe
         )
 
-        # 3. Créer les lignes (Partie Double)
-        # Compte de contrepartie (Charge ou Produit)
         compte_cp = CompteComptable.objects.get_or_create(numero=regle["compte_contrepartie"])[0]
-        # Compte de banque
         compte_bq = CompteComptable.objects.get_or_create(numero=COMPTE_BANQUE)[0]
 
-        if transaction.montant > 0: # Entrée d'argent (Vente)
-            # Débit Banque / Crédit Produit
+        # LOGIQUE SPÉCIFIQUE : Si c'est une créance (411), on n'utilise pas le compte Banque (512)
+        if regle["compte_contrepartie"] == "411000":
+            # On simule la constatation de la facture : Débit 411 (Client) / Crédit 707 (Vente)
+            compte_vente = CompteComptable.objects.get_or_create(numero="707000")[0]
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_cp, montant_debit=montant_abs, libelle=transaction.libelle_banque)
+            LigneEcriture.objects.create(ecriture=ecriture, compte=compte_vente, montant_credit=montant_abs, libelle=transaction.libelle_banque)
+        
+        elif transaction.montant > 0: # Entrée d'argent réelle
             LigneEcriture.objects.create(ecriture=ecriture, compte=compte_bq, montant_debit=montant_abs, libelle=transaction.libelle_banque)
             LigneEcriture.objects.create(ecriture=ecriture, compte=compte_cp, montant_credit=montant_abs, libelle=transaction.libelle_banque)
-        else: # Sortie d'argent (Achat)
-            # Débit Charge / Crédit Banque
+        
+        else: # Sortie d'argent réelle
             LigneEcriture.objects.create(ecriture=ecriture, compte=compte_cp, montant_debit=montant_abs, libelle=transaction.libelle_banque)
             LigneEcriture.objects.create(ecriture=ecriture, compte=compte_bq, montant_credit=montant_abs, libelle=transaction.libelle_banque)
 
-        # 4. Mettre à jour le statut de la transaction
         transaction.statut = 'valide'
         transaction.ecriture_generee = ecriture
         transaction.save()
-        
         return ecriture
+
+        
     def identifier_regle(self, transaction) -> dict:
-        """Recherche une règle basée sur le libellé de la transaction."""
-        # Compatibilité TransactionRaw (libelle) et TransactionBancaire (libelle_banque)
         libelle_raw = getattr(transaction, 'libelle', None) or getattr(transaction, 'libelle_banque', '')
         libelle_lower = libelle_raw.lower()
-        sens_tx = "credit" if transaction.montant > 0 else "debit"
+        
+        # PRIORITÉ ABSOLUE : Si le mot "créance" ou "impayé" est là, 
+        # on force la règle Créance Client (411000)
+        if "créance" in libelle_lower or "creance" in libelle_lower or "impayé" in libelle_lower:
+            return {
+                "compte_contrepartie": "411000",
+                "categorie": "creances",
+                "tva_applicable": False,
+                "sens": "special" # Pour bypasser le filtre de sens
+            }
 
+        # Sinon, logique normale (crédit pour +, débit pour -)
+        sens_tx = "credit" if transaction.montant > 0 else "debit"
         for regle in self.regles:
             if regle["sens"] == sens_tx:
                 for mot in regle["mots_cles"]:
                     if mot in libelle_lower:
                         return regle
 
-        return {
-            "compte_contrepartie": "471000",
-            "categorie": "a_preciser",
-            "tva_applicable": False,
-        }
+        return {"compte_contrepartie": "471000", "categorie": "a_preciser", "tva_applicable": False}
+        
 
     def generer_ecriture(self, transaction) -> dict | None:
         """
